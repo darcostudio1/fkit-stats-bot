@@ -56,18 +56,21 @@ class StatModalPage(discord.ui.Modal):
         self.page_num = page_num
         self.prev_data = prev_data or {}
         print(f"Creating modal page {page_num+1}:")
-        for field_id, label, input_type, extra in STAT_PAGES[page_num]:
-            print(f"  Adding field: {field_id}, type: {input_type}, extra: {extra}")
+        for idx, (field_id, label, input_type, extra) in enumerate(STAT_PAGES[page_num]):
+            custom_id = f"{field_id}_p{page_num+1}"
+            print(f"  Adding field: {field_id}, type: {input_type}, extra: {extra}, custom_id: {custom_id}")
             if input_type == "dropdown":
-                self.add_item(discord.ui.TextInput(label=label, placeholder=f"Choose: {', '.join(extra)}", required=True, custom_id=field_id))
+                self.add_item(discord.ui.TextInput(label=label, placeholder=f"Choose: {', '.join(extra)}", required=True, custom_id=custom_id))
             else:
-                self.add_item(discord.ui.TextInput(label=label, placeholder=label, required=True, custom_id=field_id))
+                self.add_item(discord.ui.TextInput(label=label, placeholder=label, required=True, custom_id=custom_id))
 
     async def on_submit(self, interaction: discord.Interaction):
         # Gather data from this page
         data = self.prev_data.copy()
         for item in self.children:
-            data[item.custom_id] = item.value
+            # Remove _pX suffix to get the original field_id
+            field_id = item.custom_id.rsplit('_p', 1)[0]
+            data[field_id] = item.value
         # If not final page, show next modal
         if self.page_num + 1 < len(STAT_PAGES):
             user_modal_data[interaction.user.id] = data  # Save progress
