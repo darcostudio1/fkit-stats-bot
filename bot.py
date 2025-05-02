@@ -59,8 +59,7 @@ class StatModalPage(discord.ui.Modal):
             if input_type == "dropdown":
                 self.add_item(discord.ui.TextInput(label=label, placeholder=f"Choose: {', '.join(extra)}", required=True, custom_id=field_id))
             else:
-                description = extra if isinstance(extra, str) else None
-                self.add_item(discord.ui.TextInput(label=label, placeholder=description or label, required=True, custom_id=field_id))
+                self.add_item(discord.ui.TextInput(label=label, placeholder=label, required=True, custom_id=field_id))
 
     async def on_submit(self, interaction: discord.Interaction):
         # Gather data from this page
