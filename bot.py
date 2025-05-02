@@ -193,8 +193,26 @@ class StatSession:
                     self.data[field_id] = None
                 else:
                     self.data[field_id] = str(val)
-        # Upsert to Supabase
-        supabase.table("player_stats").upsert(self.data, on_conflict=["discord_id"]).execute()
+        # Insert a new submission (no upsert)
+        supabase.table("player_stats").insert(self.data).execute()
+        # Cleanup: keep only the 3 most recent submissions per (discord_id, keep_name)
+        # This is done by calling a PostgREST RPC (recommended), or you can schedule this cleanup in Supabase SQL as a function or scheduled job.
+        # For now, we'll attempt to call a raw SQL query via Supabase (if permissions allow)
+        try:
+            cleanup_sql = '''
+            DELETE FROM player_stats
+            WHERE id NOT IN (
+              SELECT id FROM (
+                SELECT id,
+                       ROW_NUMBER() OVER (PARTITION BY discord_id, keep_name ORDER BY last_updated DESC) AS rn
+                FROM player_stats
+              ) t
+              WHERE rn <= 3
+            );
+            '''
+            supabase.postgrest.rpc("execute_sql", {"sql": cleanup_sql}).execute()
+        except Exception:
+            pass
         await interaction.followup.send("Your stats have been submitted!", ephemeral=True)
         # Delete the prompt message if it exists
         if hasattr(self, 'prompt_msg') and self.prompt_msg:
@@ -278,10 +296,17 @@ async def update_stats_message(channel, guild):
     # Fetch all stats
     res = supabase.table("player_stats").select("*").execute()
     rows = res.data or []
+    # Only keep the most recent submission per (discord_id, keep_name)
+    latest = {}
+    for row in rows:
+        key = (row["discord_id"], row["keep_name"])
+        # If not present or this row is newer, update
+        if key not in latest or row["last_updated"] > latest[key]["last_updated"]:
+            latest[key] = row
     # Format as a table (showing key fields and last updated)
     header = "| Player | Alliance | Keep Level | Troop Level | Dragon | Last Updated |\n|---|---|---|---|---|---|"
     lines = [header]
-    for row in rows:
+    for row in latest.values():
         member = guild.get_member(int(row["discord_id"]))
         name = member.display_name if member else row["discord_id"]
         lines.append(f"| {name} | {row['alliance']} | {row['keep_level']} | {row['troop_level']} | {row['dragon_level']} | {row['last_updated'][:10]} |")
@@ -292,6 +317,7 @@ async def update_stats_message(channel, guild):
             await msg.edit(content=table)
             return
     await channel.send(table)
+
 
 
 
