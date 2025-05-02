@@ -69,12 +69,15 @@ function App() {
 
   // Get unique values for filters
   const branchOptions = Array.from(new Set(rows.map(row => row.alliance).filter(Boolean)));
-  const troopTypeOptions = Array.from(new Set(rows.map(row => row.keep_name).filter(Boolean)));
+  const troopTypeOptions = ["Infantry", "Cavalry", "Range"];
   const troopLevelOptions = Array.from(new Set(rows.map(row => row.troop_level).filter(Boolean)));
+
+  // Troop type logic: try to use row.troop_type, else fallback to blank
+  const getTroopType = row => row.troop_type || "";
 
   const filteredRows = rows.filter(row => {
     const matchesBranch = branchFilter ? row.alliance === branchFilter : true;
-    const matchesTroopType = troopTypeFilter ? row.keep_name === troopTypeFilter : true;
+    const matchesTroopType = troopTypeFilter ? getTroopType(row) === troopTypeFilter : true;
     const matchesTroopLevel = troopLevelFilter ? row.troop_level === troopLevelFilter : true;
     const matchesSearch = Object.values(row)
       .join(" ")
@@ -88,14 +91,14 @@ function App() {
       <Typography variant="h3" align="center" gutterBottom>
         FK!T Alliance Stats
       </Typography>
-      <Box sx={{ mb: 2, display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}>
+      <Box sx={{ mb: 2, display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center", flexDirection: { xs: "column", sm: "row" } }}>
         <TextField
           select
           label="Branch"
           value={branchFilter}
           onChange={e => setBranchFilter(e.target.value)}
           SelectProps={{ native: true }}
-          sx={{ width: 180 }}
+          sx={{ width: 180, minWidth: 150 }}
         >
           <option value="">All Branches</option>
           {branchOptions.map(opt => (
@@ -108,7 +111,7 @@ function App() {
           value={troopTypeFilter}
           onChange={e => setTroopTypeFilter(e.target.value)}
           SelectProps={{ native: true }}
-          sx={{ width: 180 }}
+          sx={{ width: 180, minWidth: 150 }}
         >
           <option value="">All Troop Types</option>
           {troopTypeOptions.map(opt => (
@@ -121,7 +124,7 @@ function App() {
           value={troopLevelFilter}
           onChange={e => setTroopLevelFilter(e.target.value)}
           SelectProps={{ native: true }}
-          sx={{ width: 180 }}
+          sx={{ width: 180, minWidth: 150 }}
         >
           <option value="">All Troop Levels</option>
           {troopLevelOptions.map(opt => (
@@ -133,7 +136,7 @@ function App() {
           variant="outlined"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          sx={{ width: 320 }}
+          sx={{ width: 320, minWidth: 200 }}
         />
       </Box>
       <div style={{ height: 600, width: "100%" }}>
