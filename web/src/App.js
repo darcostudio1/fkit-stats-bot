@@ -94,54 +94,62 @@ function App() {
       <Typography variant="h3" align="center" gutterBottom>
         FK!T Alliance Stats
       </Typography>
-      <Box sx={{ mb: 3, display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center", flexDirection: { xs: "column", sm: "row" } }}>
-        <TextField
-          select
-          label="Branch"
-          value={branchFilter}
-          onChange={e => setBranchFilter(e.target.value)}
-          SelectProps={{ native: true }}
-          sx={{ width: 180, minWidth: 150, mb: { xs: 2, sm: 0 } }}
-        >
-          <option value="">All Branches</option>
-          {branchOptions.map(opt => (
-            <option key={opt} value={opt}>{opt}</option>
-          ))}
-        </TextField>
-        <TextField
-          select
-          label="Troop Type"
-          value={troopTypeFilter}
-          onChange={e => setTroopTypeFilter(e.target.value)}
-          SelectProps={{ native: true }}
-          sx={{ width: 180, minWidth: 150 }}
-        >
-          <option value="">All Troop Types</option>
-          {troopTypeOptions.map(opt => (
-            <option key={opt} value={opt}>{opt}</option>
-          ))}
-        </TextField>
-        <TextField
-          select
-          label="Troop Level"
-          value={troopLevelFilter}
-          onChange={e => setTroopLevelFilter(e.target.value)}
-          SelectProps={{ native: true }}
-          sx={{ width: 180, minWidth: 150 }}
-        >
-          <option value="">All Troop Levels</option>
-          {troopLevelOptions.map(opt => (
-            <option key={opt} value={opt}>{opt}</option>
-          ))}
-        </TextField>
-        <TextField
-          label="Search Players, Keeps, Stats..."
-          variant="outlined"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          sx={{ width: 320, minWidth: 200 }}
-        />
-      </Box>
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6} md={2}>
+          <TextField
+            select
+            fullWidth
+            label="Branch"
+            value={branchFilter}
+            onChange={e => setBranchFilter(e.target.value)}
+            SelectProps={{ native: true }}
+          >
+            <option value="">All Branches</option>
+            {branchOptions.map(opt => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid item xs={12} sm={6} md={2}>
+          <TextField
+            select
+            fullWidth
+            label="Troop Type"
+            value={troopTypeFilter}
+            onChange={e => setTroopTypeFilter(e.target.value)}
+            SelectProps={{ native: true }}
+          >
+            <option value="">All Troop Types</option>
+            {troopTypeOptions.map(opt => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid item xs={12} sm={6} md={2}>
+          <TextField
+            select
+            fullWidth
+            label="Troop Level"
+            value={troopLevelFilter}
+            onChange={e => setTroopLevelFilter(e.target.value)}
+            SelectProps={{ native: true }}
+          >
+            <option value="">All Troop Levels</option>
+            {troopLevelOptions.map(opt => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid item xs={12} sm={6} md={6}>
+          <TextField
+            fullWidth
+            label="Search Players, Keeps, Stats..."
+            variant="outlined"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </Grid>
+      </Grid>
       <div style={{ height: 600, width: "100%" }}>
         <DataGrid
           rows={filteredRows}
