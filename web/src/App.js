@@ -8,38 +8,49 @@ const supabase = createClient(
   process.env.REACT_APP_SUPABASE_ANON_KEY
 );
 
-const columns = [
-  { field: "discord_name", headerName: "Player", width: 180 },
-  { field: "alliance", headerName: "Alliance", width: 120 },
-  { field: "keep_name", headerName: "Keep Name", width: 160 },
-  { field: "keep_level", headerName: "Keep Level", width: 110 },
-  { field: "troop_level", headerName: "Troop Level", width: 120 },
-  { field: "dragon_level", headerName: "Dragon", width: 100 },
-  { field: "march_size", headerName: "March Size", width: 120 },
-  { field: "house_level", headerName: "House Level", width: 120 },
-  { field: "last_updated", headerName: "Last Updated", width: 150 },
-];
+// Columns will be generated dynamically from data
+const columnHeaderMap = {
+  id: "ID",
+  discord_name: "Player",
+  alliance: "Alliance",
+  keep_name: "Keep Name",
+  keep_level: "Keep Level",
+  troop_level: "Troop Level",
+  dragon_level: "Dragon",
+  march_size: "March Size",
+  house_level: "House Level",
+  last_updated: "Last Updated",
+  // Add more mappings as needed
+};
+
 
 function App() {
   const [rows, setRows] = useState([]);
   const [search, setSearch] = useState("");
 
+  const [columns, setColumns] = useState([]);
   useEffect(() => {
     async function fetchStats() {
       let { data, error } = await supabase
         .from("player_stats")
-        .select("id, discord_name, alliance, keep_name, keep_level, troop_level, dragon_level, march_size, house_level, last_updated")
+        .select("*")
         .order("last_updated", { ascending: false });
       if (error) return;
-      // Only show the most recent for each (discord_id, keep_name)
-      const seen = new Set();
-      const filtered = data.filter(row => {
-        const key = row.discord_name + "_" + row.keep_name;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-      setRows(filtered.map(row => ({ ...row, id: row.id })));
+      if (data && data.length > 0) {
+        // Dynamically generate columns except for discord_id
+        const keys = Object.keys(data[0]).filter(k => k !== "discord_id");
+        setColumns(
+          keys.map(key => ({
+            field: key,
+            headerName: columnHeaderMap[key] || key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase()),
+            width: 140,
+          }))
+        );
+        setRows(data.map(row => ({ ...row, id: row.id })));
+      } else {
+        setColumns([]);
+        setRows([]);
+      }
     }
     fetchStats();
   }, []);
