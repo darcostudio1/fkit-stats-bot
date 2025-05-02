@@ -129,9 +129,10 @@ class StatSession:
             view.add_item(select)
             await interaction.followup.send(f"**{label}**", view=view, ephemeral=True)
         else:
-            await interaction.followup.send(f"**{label}**\n{extra if extra else ''}\nPlease reply with your answer.", ephemeral=True)
+            channel = interaction.channel
+            await channel.send(f"{interaction.user.mention} **{label}**\n{extra if extra else ''}\nPlease reply with your answer.")
             def check(m):
-                return m.author.id == self.user_id and m.channel == interaction.channel
+                return m.author.id == self.user_id and m.channel == channel
             msg = await bot.wait_for('message', check=check)
             self.data[field_id] = msg.content.strip()
             self.step += 1
