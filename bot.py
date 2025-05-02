@@ -209,8 +209,12 @@ class SubmitStatsButton(discord.ui.View):
     @discord.ui.button(label="Submit Stats", style=discord.ButtonStyle.primary, custom_id="submit_stats_button")
     async def submit_stats(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=True)
-        # Create a thread for this stat session
-        thread_name = f"Stat Submission - {interaction.user.display_name}"
+        # Send a message in the channel before creating the thread
+        await interaction.channel.send(f"{interaction.user.mention} Please click your submission thread below to continue:")
+        # Create a thread for this stat session with the current date
+        from datetime import datetime
+        today_str = datetime.now().strftime('%Y-%m-%d')
+        thread_name = f"Stat Submission - {interaction.user.display_name} - {today_str}"
         thread = await interaction.channel.create_thread(name=thread_name, type=discord.ChannelType.public_thread, auto_archive_duration=60)
         # Post alliance select dropdown in the thread
         alliance_select = discord.ui.Select(
@@ -224,7 +228,7 @@ class SubmitStatsButton(discord.ui.View):
         )
         view = discord.ui.View()
         view.add_item(alliance_select)
-        msg = await thread.send("Please select your alliance to begin:", view=view)
+        msg = await thread.send("Please select your FK!T alliance branch to begin:", view=view)
 
         async def select_callback(select_interaction: discord.Interaction):
             await select_interaction.response.defer()
@@ -243,7 +247,7 @@ async def poststatsbutton(interaction: discord.Interaction):
     if not any(role.name in admin_roles for role in interaction.user.roles):
         await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
         return
-    embed = discord.Embed(title="Alliance Stat Submission", description="Click the button below to submit your stats for the alliance.", color=discord.Color.blue())
+    embed = discord.Embed(title="Alliance Stat Submission", description="We know you've been grinding. Show us those stats!", color=discord.Color.blue())
     await interaction.channel.send(embed=embed, view=SubmitStatsButton())
     await interaction.response.send_message("Submit Stats button posted!", ephemeral=True)
 
