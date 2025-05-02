@@ -27,7 +27,9 @@ const columnHeaderMap = {
 function App() {
   const [rows, setRows] = useState([]);
   const [search, setSearch] = useState("");
-
+  const [branchFilter, setBranchFilter] = useState("");
+  const [troopTypeFilter, setTroopTypeFilter] = useState("");
+  const [troopLevelFilter, setTroopLevelFilter] = useState("");
   const [columns, setColumns] = useState([]);
   useEffect(() => {
     async function fetchStats() {
@@ -65,20 +67,67 @@ function App() {
     fetchStats();
   }, []);
 
-  const filteredRows = rows.filter(
-    row =>
-      Object.values(row)
-        .join(" ")
-        .toLowerCase()
-        .includes(search.toLowerCase())
-  );
+  // Get unique values for filters
+  const branchOptions = Array.from(new Set(rows.map(row => row.alliance).filter(Boolean)));
+  const troopTypeOptions = Array.from(new Set(rows.map(row => row.keep_name).filter(Boolean)));
+  const troopLevelOptions = Array.from(new Set(rows.map(row => row.troop_level).filter(Boolean)));
+
+  const filteredRows = rows.filter(row => {
+    const matchesBranch = branchFilter ? row.alliance === branchFilter : true;
+    const matchesTroopType = troopTypeFilter ? row.keep_name === troopTypeFilter : true;
+    const matchesTroopLevel = troopLevelFilter ? row.troop_level === troopLevelFilter : true;
+    const matchesSearch = Object.values(row)
+      .join(" ")
+      .toLowerCase()
+      .includes(search.toLowerCase());
+    return matchesBranch && matchesTroopType && matchesTroopLevel && matchesSearch;
+  });
 
   return (
     <Container maxWidth="xl" sx={{ mt: 6 }}>
       <Typography variant="h3" align="center" gutterBottom>
         FK!T Alliance Stats
       </Typography>
-      <Box sx={{ mb: 2, display: "flex", justifyContent: "flex-end" }}>
+      <Box sx={{ mb: 2, display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}>
+        <TextField
+          select
+          label="Branch"
+          value={branchFilter}
+          onChange={e => setBranchFilter(e.target.value)}
+          SelectProps={{ native: true }}
+          sx={{ width: 180 }}
+        >
+          <option value="">All Branches</option>
+          {branchOptions.map(opt => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
+        </TextField>
+        <TextField
+          select
+          label="Troop Type"
+          value={troopTypeFilter}
+          onChange={e => setTroopTypeFilter(e.target.value)}
+          SelectProps={{ native: true }}
+          sx={{ width: 180 }}
+        >
+          <option value="">All Troop Types</option>
+          {troopTypeOptions.map(opt => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
+        </TextField>
+        <TextField
+          select
+          label="Troop Level"
+          value={troopLevelFilter}
+          onChange={e => setTroopLevelFilter(e.target.value)}
+          SelectProps={{ native: true }}
+          sx={{ width: 180 }}
+        >
+          <option value="">All Troop Levels</option>
+          {troopLevelOptions.map(opt => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
+        </TextField>
         <TextField
           label="Search Players, Keeps, Stats..."
           variant="outlined"
