@@ -32,12 +32,12 @@ def get_stat_fields():
         ("rally_cap", "Rally Cap", "text", "This is the maximum number of troops you can rally. You can find it in your rally menu or rally info screen."),
         ("reinforcement_capacity_vs_sop", "Reinforcement Capacity vs SOP", "text", "This is the maximum number of troops you can reinforce at a Seat of Power. Check your keep’s reinforcement info at an SOP."),
         ("troop_type", "Troop Type", "dropdown", ["Infantry", "Range", "Cavalry"]),
-        ("marcher_attack_vs_player_sop", "Marcher (Troop) Attack vs Player at SOP", "int", None),
-        ("marcher_defense_vs_player_sop", "Marcher (Troop) Defense vs Player at SOP", "int", None),
-        ("marcher_health_vs_player_sop", "Marcher (Troop) Health vs Player at SOP", "int", None),
-        ("adh_attack_vs_player_sop", "(Troop) Attack vs Player at SOP", "int", None),
-        ("adh_defense_vs_player_sop", "(Troop) Defense vs Player at SOP", "int", None),
-        ("adh_health_vs_player_sop", "(Troop) Health vs Player at SOP", "int", None),
+        ("marcher_attack_vs_player_sop", "Marcher (Troop) Attack vs Player at SOP", "text", None),
+        ("marcher_defense_vs_player_sop", "Marcher (Troop) Defense vs Player at SOP", "text", None),
+        ("marcher_health_vs_player_sop", "Marcher (Troop) Health vs Player at SOP", "text", None),
+        ("adh_attack_vs_player_sop", "(Troop) Attack vs Player at SOP", "text", None),
+        ("adh_defense_vs_player_sop", "(Troop) Defense vs Player at SOP", "text", None),
+        ("adh_health_vs_player_sop", "(Troop) Health vs Player at SOP", "text", None),
     ]
 
 # --- Multi-step Modal Implementation ---
@@ -247,7 +247,7 @@ async def poststatsbutton(interaction: discord.Interaction):
     if not any(role.name in admin_roles for role in interaction.user.roles):
         await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
         return
-    embed = discord.Embed(title="Alliance Stat Submission", description="We know you've been grinding. Show us those stats!", color=discord.Color.blue())
+    embed = discord.Embed(title="Stat Submission", description="We know you've been grinding. Show us those stats!", color=discord.Color.blue())
     await interaction.channel.send(embed=embed, view=SubmitStatsButton())
     await interaction.response.send_message("Submit Stats button posted!", ephemeral=True)
 
