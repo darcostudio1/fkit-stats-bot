@@ -18,6 +18,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 intents = discord.Intents.default()
 intents.members = True
+intents.message_content = True  # Enable reading message content for stat collection
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 def get_stat_fields():
