@@ -139,6 +139,7 @@ class StatSession:
         else:
             while True:
                 await self.thread.send(f"{interaction.user.mention} **{label}**\n{extra if extra else ''}\nPlease reply with your answer.")
+                print(f"[DEBUG] Bot intents at runtime: message_content={getattr(bot.intents, 'message_content', None)}")
                 def check(m):
                     print(f"[DEBUG] Received message: '{m.content}' from {m.author} in {m.channel}")
                     # Only accept the next message from the correct user in the thread
