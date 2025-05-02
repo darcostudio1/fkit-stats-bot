@@ -55,7 +55,9 @@ class StatModalPage(discord.ui.Modal):
         self.alliance = alliance
         self.page_num = page_num
         self.prev_data = prev_data or {}
+        print(f"Creating modal page {page_num+1}:")
         for field_id, label, input_type, extra in STAT_PAGES[page_num]:
+            print(f"  Adding field: {field_id}, type: {input_type}, extra: {extra}")
             if input_type == "dropdown":
                 self.add_item(discord.ui.TextInput(label=label, placeholder=f"Choose: {', '.join(extra)}", required=True, custom_id=field_id))
             else:
