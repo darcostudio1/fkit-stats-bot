@@ -130,11 +130,25 @@ class StatSession:
             await interaction.followup.send(f"**{label}**", view=view, ephemeral=True)
         else:
             channel = interaction.channel
-            await channel.send(f"{interaction.user.mention} **{label}**\n{extra if extra else ''}\nPlease reply with your answer.")
-            def check(m):
-                return m.author.id == self.user_id and m.channel == channel
-            msg = await bot.wait_for('message', check=check)
-            self.data[field_id] = msg.content.strip()
+            while True:
+                await channel.send(f"{interaction.user.mention} **{label}**\n{extra if extra else ''}\nPlease reply with your answer.")
+                def check(m):
+                    return m.author.id == self.user_id and m.channel == channel
+                msg = await bot.wait_for('message', check=check)
+                user_input = msg.content.strip()
+                if input_type == "int":
+                    if user_input == "":
+                        self.data[field_id] = None
+                        break
+                    try:
+                        self.data[field_id] = int(user_input)
+                        break
+                    except ValueError:
+                        await channel.send(f"{interaction.user.mention} Please enter a valid integer for **{label}**.")
+                        continue
+                else:
+                    self.data[field_id] = user_input if user_input != "" else None
+                    break
             self.step += 1
             await self.next_step(interaction)
 
@@ -163,6 +177,8 @@ class StatSession:
                     self.data[field_id] = None
                 else:
                     self.data[field_id] = str(val)
+        # Debug: print data being upserted
+        print("[DEBUG] Upserting to Supabase:", self.data)
         # Upsert to Supabase
         supabase.table("player_stats").upsert(self.data, on_conflict=["discord_id"]).execute()
         await interaction.followup.send("Your stats have been submitted!", ephemeral=True)
