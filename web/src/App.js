@@ -40,11 +40,21 @@ function App() {
         // Dynamically generate columns except for discord_id, id, and discord_name (Player)
         const keys = Object.keys(data[0]).filter(k => k !== "discord_id" && k !== "id" && k !== "discord_name");
         setColumns(
-          keys.map(key => ({
-            field: key,
-            headerName: columnHeaderMap[key] || key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase()),
-            width: 140,
-          }))
+          keys.map(key => {
+            let col = {
+              field: key,
+              headerName: columnHeaderMap[key] || key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase()),
+              width: 140,
+            };
+            if (key === "last_updated") {
+              col.valueFormatter = (params) => {
+                if (!params.value) return "";
+                const d = new Date(params.value);
+                return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+              };
+            }
+            return col;
+          })
         );
         setRows(data.map(row => ({ ...row, id: row.id })));
       } else {
