@@ -227,6 +227,7 @@ class SubmitStatsButton(discord.ui.View):
         msg = await thread.send("Please select your alliance to begin:", view=view)
 
         async def select_callback(select_interaction: discord.Interaction):
+            await select_interaction.response.defer()
             alliance = alliance_select.values[0]
             session = StatSession(interaction.user.id, alliance)
             active_sessions[interaction.user.id] = session
