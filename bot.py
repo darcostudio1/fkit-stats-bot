@@ -141,6 +141,7 @@ class StatSession:
                 await self.thread.send(f"{interaction.user.mention} **{label}**\n{extra if extra else ''}\nPlease reply with your answer.")
                 def check(m):
                     print(f"[DEBUG] Received message: '{m.content}' from {m.author} in {m.channel}")
+                    # Only accept the next message from the correct user in the thread
                     return m.author.id == self.user_id and m.channel == self.thread
                 msg = await bot.wait_for('message', check=check)
                 user_input = msg.content.strip()
