@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { DataGrid } from "@mui/x-data-grid";
-import { Container, Typography, Box, TextField, Grid } from "@mui/material";
+import { Container, Typography, Box, TextField } from "@mui/material";
+import Grid from "@mui/material/Grid";
 
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_URL,
