@@ -122,15 +122,7 @@ async def update_stats_message(channel, guild):
             return
     await channel.send(table)
 
-@bot.tree.command(name="submitstats", description="Submit your updated stats")
-@app_commands.describe(alliance="Which alliance are you currently in?")
-@app_commands.choices(alliance=[
-    app_commands.Choice(name="FK!T", value="FK!T"),
-    app_commands.Choice(name="SK!T", value="SK!T"),
-    app_commands.Choice(name="Recruitment", value="Recruitment"),
-])
-async def submitstats(interaction: discord.Interaction, alliance: app_commands.Choice[str]):
-    await interaction.response.send_modal(StatModal(alliance.value))
+
 
 @bot.tree.command(name="showstats", description="Show the full team stats (admin only)")
 async def showstats(interaction: discord.Interaction):
