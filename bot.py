@@ -193,13 +193,21 @@ class StatSession:
                     self.data[field_id] = None
                 else:
                     self.data[field_id] = str(val)
-        # Debug: print data being upserted
-        
-        
-        # Hardcoded upsert test
         # Upsert to Supabase
         supabase.table("player_stats").upsert(self.data, on_conflict=["discord_id"]).execute()
         await interaction.followup.send("Your stats have been submitted!", ephemeral=True)
+        # Delete the prompt message if it exists
+        if hasattr(self, 'prompt_msg') and self.prompt_msg:
+            try:
+                await self.prompt_msg.delete()
+            except Exception:
+                pass
+        # Delete the thread
+        if hasattr(self, 'thread') and self.thread:
+            try:
+                await self.thread.delete()
+            except Exception:
+                pass
         active_sessions.pop(self.user_id, None)
 
 class SubmitStatsButton(discord.ui.View):
@@ -210,7 +218,7 @@ class SubmitStatsButton(discord.ui.View):
     async def submit_stats(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=True)
         # Send a message in the channel before creating the thread
-        await interaction.channel.send(f"{interaction.user.mention} Please click your submission thread below to continue:")
+        prompt_msg = await interaction.channel.send(f"{interaction.user.mention} Please click your submission thread below to continue:")
         # Create a thread for this stat session with the current date
         from datetime import datetime
         today_str = datetime.now().strftime('%Y-%m-%d')
@@ -236,6 +244,7 @@ class SubmitStatsButton(discord.ui.View):
             session = StatSession(interaction.user.id, alliance)
             active_sessions[interaction.user.id] = session
             session.thread = thread
+            session.prompt_msg = prompt_msg  # Store the prompt message object
             await thread.send(f"{interaction.user.mention}, let's collect your stats! Please answer each prompt below.")
             await session.next_step(interaction)
             await select_interaction.message.delete()
