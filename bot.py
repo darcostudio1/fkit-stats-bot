@@ -110,6 +110,12 @@ class StatSession:
         self.step = 0
 
     async def start(self, interaction):
+        # Create a temporary thread for this stat session
+        channel = interaction.channel
+        thread_name = f"Stat Submission - {interaction.user.display_name}"
+        thread = await channel.create_thread(name=thread_name, type=discord.ChannelType.public_thread, auto_archive_duration=60)
+        self.thread = thread
+        await thread.send(f"{interaction.user.mention}, let's collect your stats! Please answer each prompt below.")
         await self.next_step(interaction)
 
     async def next_step(self, interaction):
@@ -129,14 +135,13 @@ class StatSession:
                 await self.next_step(select_interaction)
             select.callback = select_callback
             view.add_item(select)
-            await interaction.followup.send(f"**{label}**", view=view, ephemeral=True)
+            await self.thread.send(f"**{label}**", view=view)
         else:
-            channel = interaction.channel
             while True:
-                await channel.send(f"{interaction.user.mention} **{label}**\n{extra if extra else ''}\nPlease reply with your answer.")
+                await self.thread.send(f"{interaction.user.mention} **{label}**\n{extra if extra else ''}\nPlease reply with your answer.")
                 def check(m):
                     print(f"[DEBUG] Received message: '{m.content}' from {m.author} in {m.channel}")
-                    return m.author.id == self.user_id and m.channel == channel
+                    return m.author.id == self.user_id and m.channel == self.thread
                 msg = await bot.wait_for('message', check=check)
                 user_input = msg.content.strip()
                 print(f"[DEBUG] Prompted field: {field_id}, user input: '{user_input}' (type: {type(user_input)})")
@@ -150,7 +155,7 @@ class StatSession:
                         print(f"[DEBUG] self.data[{field_id}] set to {self.data[field_id]} (type: {type(self.data[field_id])})")
                         break
                     except ValueError:
-                        await channel.send(f"{interaction.user.mention} Please enter a valid integer for **{label}**.")
+                        await self.thread.send(f"{interaction.user.mention} Please enter a valid integer for **{label}**.")
                         print(f"[DEBUG] Invalid integer input for {field_id}: '{user_input}'")
                         continue
                 else:
