@@ -135,6 +135,7 @@ class StatSession:
             while True:
                 await channel.send(f"{interaction.user.mention} **{label}**\n{extra if extra else ''}\nPlease reply with your answer.")
                 def check(m):
+                    print(f"[DEBUG] Received message: '{m.content}' from {m.author} in {m.channel}")
                     return m.author.id == self.user_id and m.channel == channel
                 msg = await bot.wait_for('message', check=check)
                 user_input = msg.content.strip()
