@@ -12,7 +12,7 @@ const supabase = createClient(
 const columnHeaderMap = {
   id: "ID",
   discord_name: "Player",
-  alliance: "Alliance",
+  alliance: "Branch", // Changed from 'Alliance' to 'Branch'
   keep_name: "Keep Name",
   keep_level: "Keep Level",
   troop_level: "Troop Level",
@@ -37,8 +37,8 @@ function App() {
         .order("last_updated", { ascending: false });
       if (error) return;
       if (data && data.length > 0) {
-        // Dynamically generate columns except for discord_id
-        const keys = Object.keys(data[0]).filter(k => k !== "discord_id");
+        // Dynamically generate columns except for discord_id, id, and discord_name (Player)
+        const keys = Object.keys(data[0]).filter(k => k !== "discord_id" && k !== "id" && k !== "discord_name");
         setColumns(
           keys.map(key => ({
             field: key,
