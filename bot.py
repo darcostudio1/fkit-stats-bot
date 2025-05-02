@@ -39,36 +39,69 @@ def get_stat_fields():
         ("adh_health_vs_player_sop", "(Troop) Health vs Player at SOP", "text", None),
     ]
 
-class StatModal(discord.ui.Modal, title="Submit Your Stats"):
-    def __init__(self, alliance):
-        super().__init__()
+# --- Multi-step Modal Implementation ---
+from typing import Dict
+
+# Split fields into pages of 5
+STAT_FIELDS = get_stat_fields()
+STAT_PAGES = [STAT_FIELDS[i:i+5] for i in range(0, len(STAT_FIELDS), 5)]
+
+# Temporary storage for user input between modals (in-memory, per session)
+user_modal_data: Dict[int, Dict[str, str]] = {}
+
+class StatModalPage(discord.ui.Modal):
+    def __init__(self, alliance, page_num, prev_data=None):
+        super().__init__(title=f"Submit Your Stats (Page {page_num+1}/3)")
         self.alliance = alliance
-        self.inputs = {}
-        for field_id, label, input_type, extra in get_stat_fields():
+        self.page_num = page_num
+        self.prev_data = prev_data or {}
+        for field_id, label, input_type, extra in STAT_PAGES[page_num]:
             if input_type == "dropdown":
-                # For dropdowns, we use a short text input and validate later
                 self.add_item(discord.ui.TextInput(label=label, placeholder=f"Choose: {', '.join(extra)}", required=True, custom_id=field_id))
             else:
                 description = extra if isinstance(extra, str) else None
                 self.add_item(discord.ui.TextInput(label=label, placeholder=description or label, required=True, custom_id=field_id))
 
     async def on_submit(self, interaction: discord.Interaction):
-        data = {"discord_id": str(interaction.user.id), "alliance": self.alliance, "last_updated": datetime.now(timezone.utc).isoformat()}
+        # Gather data from this page
+        data = self.prev_data.copy()
         for item in self.children:
             data[item.custom_id] = item.value
-        # Validate dropdown fields
-        for field_id, label, input_type, extra in get_stat_fields():
-            if input_type == "dropdown" and data[field_id] not in extra:
-                await interaction.response.send_message(f"Invalid value for {label}. Please choose one of: {', '.join(extra)}.", ephemeral=True)
-                return
-        # Upsert to Supabase
-        supabase.table("player_stats").upsert(data, on_conflict=["discord_id"]).execute()
-        await interaction.response.send_message("Your stats have been submitted!", ephemeral=True)
-        # Optionally update stats table in channel
-        if STATS_CHANNEL_ID:
-            channel = interaction.guild.get_channel(STATS_CHANNEL_ID)
-            if channel:
-                await update_stats_message(channel, interaction.guild)
+        # If not final page, show next modal
+        if self.page_num < len(STAT_PAGES) - 1:
+            user_modal_data[interaction.user.id] = data  # Save progress
+            await interaction.response.send_modal(StatModalPage(self.alliance, self.page_num + 1, data))
+        else:
+            # Final page: combine all data
+            user_modal_data.pop(interaction.user.id, None)
+            all_data = {"discord_id": str(interaction.user.id), "alliance": self.alliance, "last_updated": datetime.now(timezone.utc).isoformat()}
+            all_data.update(data)
+            for item in self.children:
+                all_data[item.custom_id] = item.value
+            # Validate dropdowns
+            for field_id, label, input_type, extra in STAT_FIELDS:
+                if input_type == "dropdown" and all_data[field_id] not in extra:
+                    await interaction.response.send_message(f"Invalid value for {label}. Please choose one of: {', '.join(extra)}.", ephemeral=True)
+                    return
+            # Upsert to Supabase
+            supabase.table("player_stats").upsert(all_data, on_conflict=["discord_id"]).execute()
+            await interaction.response.send_message("Your stats have been submitted!", ephemeral=True)
+            # Optionally update stats table in channel
+            if STATS_CHANNEL_ID:
+                channel = interaction.guild.get_channel(STATS_CHANNEL_ID)
+                if channel:
+                    await update_stats_message(channel, interaction.guild)
+
+# Update the /submitstats handler to use the new modal chain
+@bot.tree.command(name="submitstats", description="Submit your updated stats")
+@app_commands.describe(alliance="Which alliance are you currently in?")
+@app_commands.choices(alliance=[
+    app_commands.Choice(name="FK!T", value="FK!T"),
+    app_commands.Choice(name="SK!T", value="SK!T"),
+    app_commands.Choice(name="Recruitment", value="Recruitment"),
+])
+async def submitstats(interaction: discord.Interaction, alliance: app_commands.Choice[str]):
+    await interaction.response.send_modal(StatModalPage(alliance.value, 0))
 
 async def update_stats_message(channel, guild):
     # Fetch all stats
