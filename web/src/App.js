@@ -95,7 +95,7 @@ function App() {
         FK!T Alliance Stats
       </Typography>
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={2}>
+        <Grid item xs={12} md={6} lg={3}>
           <TextField
             select
             fullWidth
@@ -103,6 +103,7 @@ function App() {
             value={branchFilter}
             onChange={e => setBranchFilter(e.target.value)}
             SelectProps={{ native: true }}
+            sx={{ mb: { xs: 2, md: 0 } }}
           >
             <option value="">All Branches</option>
             {branchOptions.map(opt => (
@@ -110,7 +111,7 @@ function App() {
             ))}
           </TextField>
         </Grid>
-        <Grid item xs={12} sm={6} md={2}>
+        <Grid item xs={12} md={6} lg={3}>
           <TextField
             select
             fullWidth
@@ -118,6 +119,7 @@ function App() {
             value={troopTypeFilter}
             onChange={e => setTroopTypeFilter(e.target.value)}
             SelectProps={{ native: true }}
+            sx={{ mb: { xs: 2, md: 0 } }}
           >
             <option value="">All Troop Types</option>
             {troopTypeOptions.map(opt => (
@@ -125,7 +127,7 @@ function App() {
             ))}
           </TextField>
         </Grid>
-        <Grid item xs={12} sm={6} md={2}>
+        <Grid item xs={12} md={6} lg={3}>
           <TextField
             select
             fullWidth
@@ -133,6 +135,7 @@ function App() {
             value={troopLevelFilter}
             onChange={e => setTroopLevelFilter(e.target.value)}
             SelectProps={{ native: true }}
+            sx={{ mb: { xs: 2, md: 0 } }}
           >
             <option value="">All Troop Levels</option>
             {troopLevelOptions.map(opt => (
@@ -140,13 +143,14 @@ function App() {
             ))}
           </TextField>
         </Grid>
-        <Grid item xs={12} sm={6} md={6}>
+        <Grid item xs={12} md={12} lg={3}>
           <TextField
             fullWidth
             label="Search Players, Keeps, Stats..."
             variant="outlined"
             value={search}
             onChange={e => setSearch(e.target.value)}
+            sx={{ mb: { xs: 2, md: 0 } }}
           />
         </Grid>
       </Grid>
