@@ -140,30 +140,30 @@ class StatSession:
         else:
             while True:
                 await self.thread.send(f"{interaction.user.mention} **{label}**\n{extra if extra else ''}\nPlease reply with your answer.")
-                print(f"[DEBUG] Bot intents at runtime: message_content={getattr(bot.intents, 'message_content', None)}")
+                
                 def check(m):
-                    print(f"[DEBUG] Received message: '{m.content}' from {m.author} in {m.channel}")
+                    
                     # Only accept the next message from the correct user in the thread
                     return m.author.id == self.user_id and m.channel == self.thread
                 msg = await bot.wait_for('message', check=check)
                 user_input = msg.content.strip()
-                print(f"[DEBUG] Prompted field: {field_id}, user input: '{user_input}' (type: {type(user_input)})")
+                
                 if input_type == "int":
                     if user_input == "":
                         self.data[field_id] = None
-                        print(f"[DEBUG] self.data[{field_id}] set to None (empty input)")
+                        
                         break
                     try:
                         self.data[field_id] = int(user_input)
-                        print(f"[DEBUG] self.data[{field_id}] set to {self.data[field_id]} (type: {type(self.data[field_id])})")
+                        
                         break
                     except ValueError:
                         await self.thread.send(f"{interaction.user.mention} Please enter a valid integer for **{label}**.")
-                        print(f"[DEBUG] Invalid integer input for {field_id}: '{user_input}'")
+                        
                         continue
                 else:
                     self.data[field_id] = user_input if user_input != "" else None
-                    print(f"[DEBUG] self.data[{field_id}] set to '{self.data[field_id]}' (type: {type(self.data[field_id])})")
+                    
                     break
             self.step += 1
             await self.next_step(interaction)
@@ -194,40 +194,58 @@ class StatSession:
                 else:
                     self.data[field_id] = str(val)
         # Debug: print data being upserted
-        print("[DEBUG] Upserting to Supabase:", self.data)
-        for k, v in self.data.items():
-            print(f"  [DEBUG] {k}: {v} (type: {type(v)})")
+        
+        
         # Hardcoded upsert test
-        test_data = {
-            "discord_id": "123456789",
-            "alliance": "FK!T",
-            "keep_name": "TestKeep",
-            "troop_level": "T10",
-            "keep_level": 25,
-            "march_size": "120000",
-            "dragon_level": 50,
-            "house_level": 30,
-            "rally_cap": "500000",
-            "reinforcement_capacity_vs_sop": "300000",
-            "troop_type": "Infantry",
-            "marcher_attack_vs_player_sop": 1000,
-            "marcher_defense_vs_player_sop": 900,
-            "marcher_health_vs_player_sop": 800,
-            "adh_attack_vs_player_sop": 700,
-            "adh_defense_vs_player_sop": 600,
-            "adh_health_vs_player_sop": 500,
-            "last_updated": datetime.now(timezone.utc).isoformat()
-        }
-        print("[DEBUG] TEST UPSERT:", test_data)
-        for k, v in test_data.items():
-            print(f"  [DEBUG] TEST {k}: {v} (type: {type(v)})")
-        supabase.table("player_stats").upsert(test_data, on_conflict=["discord_id"]).execute()
         # Upsert to Supabase
         supabase.table("player_stats").upsert(self.data, on_conflict=["discord_id"]).execute()
         await interaction.followup.send("Your stats have been submitted!", ephemeral=True)
         active_sessions.pop(self.user_id, None)
 
-@bot.tree.command(name="submitstats", description="Submit your updated stats")
+class SubmitStatsButton(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(discord.ui.Button(label="Submit Stats", style=discord.ButtonStyle.primary, custom_id="submit_stats_button"))
+
+    @discord.ui.button(label="Submit Stats", style=discord.ButtonStyle.primary, custom_id="submit_stats_button")
+    async def submit_stats(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer(ephemeral=True)
+        # Ask alliance choice before starting session
+        alliance_select = discord.ui.Select(
+            placeholder="Select your alliance...",
+            options=[
+                discord.SelectOption(label="FK!T", value="FK!T"),
+                discord.SelectOption(label="SK!T", value="SK!T"),
+                discord.SelectOption(label="Recruitment", value="Recruitment"),
+            ],
+            custom_id="alliance_select"
+        )
+        view = discord.ui.View()
+        view.add_item(alliance_select)
+        await interaction.followup.send("Please select your alliance to begin:", view=view, ephemeral=True)
+
+        async def select_callback(select_interaction: discord.Interaction):
+            alliance = alliance_select.values[0]
+            thread_name = f"Stat Submission - {interaction.user.display_name}"
+            thread = await interaction.channel.create_thread(name=thread_name, type=discord.ChannelType.public_thread, auto_archive_duration=60)
+            session = StatSession(interaction.user.id, alliance)
+            active_sessions[interaction.user.id] = session
+            await thread.send(f"{interaction.user.mention}, let's collect your stats! Please answer each prompt below.")
+            session.thread = thread
+            await session.next_step(interaction)
+            await select_interaction.message.delete()
+        alliance_select.callback = select_callback
+
+@bot.tree.command(name="poststatsbutton", description="Post the persistent Submit Stats button (admin only)")
+async def poststatsbutton(interaction: discord.Interaction):
+    if not any(role.name == ADMIN_ROLE for role in interaction.user.roles):
+        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+        return
+    embed = discord.Embed(title="Alliance Stat Submission", description="Click the button below to submit your stats for the alliance.", color=discord.Color.blue())
+    await interaction.channel.send(embed=embed, view=SubmitStatsButton())
+    await interaction.response.send_message("Submit Stats button posted!", ephemeral=True)
+
+@bot.tree.command(name="submitstats", description="Submit your updated stats (legacy)")
 @app_commands.describe(alliance="Which alliance are you currently in?")
 @app_commands.choices(alliance=[
     app_commands.Choice(name="FK!T", value="FK!T"),
