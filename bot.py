@@ -146,19 +146,17 @@ class StatSession:
             if input_type == "dropdown" and self.data.get(field_id) not in extra:
                 await interaction.followup.send(f"Invalid value for {label}. Please choose one of: {', '.join(extra)}.", ephemeral=True)
                 return
-        # Convert empty strings to None and valid numbers to int for integer fields
-        integer_fields = [
-            "keep_level", "dragon_level", "house_level", "rally_cap", "reinforcement_capacity_vs_sop", "march_size"
-        ]
-        for field in integer_fields:
-            val = self.data.get(field)
-            if val == "" or val is None:
-                self.data[field] = None
-            else:
-                try:
-                    self.data[field] = int(val)
-                except Exception:
-                    pass
+        # Convert all empty strings to None for all non-dropdown fields, and cast to int if possible
+        for field_id, label, input_type, extra in STAT_FIELDS:
+            val = self.data.get(field_id)
+            if input_type != "dropdown":
+                if val == "" or val is None:
+                    self.data[field_id] = None
+                else:
+                    try:
+                        self.data[field_id] = int(val)
+                    except Exception:
+                        pass
         # Upsert to Supabase
         supabase.table("player_stats").upsert(self.data, on_conflict=["discord_id"]).execute()
         await interaction.followup.send("Your stats have been submitted!", ephemeral=True)
