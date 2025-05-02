@@ -171,6 +171,10 @@ class StatSession:
     async def finish(self, interaction):
         # Add discord_id and last_updated
         self.data["discord_id"] = str(self.user_id)
+        self.data["discord_name"] = (
+            f"{interaction.user.name}#{interaction.user.discriminator}" if hasattr(interaction.user, 'name') and hasattr(interaction.user, 'discriminator')
+            else getattr(interaction.user, 'display_name', str(self.user_id))
+        )
         self.data["last_updated"] = datetime.now(timezone.utc).isoformat()
         # Validate dropdowns
         for field_id, label, input_type, extra in STAT_FIELDS:
