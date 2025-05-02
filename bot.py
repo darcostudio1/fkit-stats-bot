@@ -97,6 +97,60 @@ class StatModalPage(discord.ui.Modal):
                     await update_stats_message(channel, interaction.guild)
 
 # Update the /submitstats handler to use the new modal chain
+# --- Message-based Stat Collection ---
+from discord.ui import View, Select, Button
+
+active_sessions = {}
+
+class StatSession:
+    def __init__(self, user_id, alliance):
+        self.user_id = user_id
+        self.alliance = alliance
+        self.data = {"alliance": alliance}
+        self.step = 0
+
+    async def start(self, interaction):
+        await self.next_step(interaction)
+
+    async def next_step(self, interaction):
+        if self.step >= len(STAT_FIELDS):
+            await self.finish(interaction)
+            return
+        field_id, label, input_type, extra = STAT_FIELDS[self.step]
+        if input_type == "dropdown":
+            view = View()
+            select = Select(placeholder=label, options=[discord.SelectOption(label=opt, value=opt) for opt in extra], custom_id=f"stat_{field_id}")
+            async def select_callback(select_interaction):
+                self.data[field_id] = select.values[0]
+                self.step += 1
+                await select_interaction.response.defer()
+                await self.next_step(select_interaction)
+            select.callback = select_callback
+            view.add_item(select)
+            await interaction.followup.send(f"**{label}**", view=view, ephemeral=True)
+        else:
+            await interaction.followup.send(f"**{label}**\n{extra if extra else ''}\nPlease reply with your answer.", ephemeral=True)
+            def check(m):
+                return m.author.id == self.user_id and m.channel == interaction.channel
+            msg = await bot.wait_for('message', check=check)
+            self.data[field_id] = msg.content.strip()
+            self.step += 1
+            await self.next_step(interaction)
+
+    async def finish(self, interaction):
+        # Add discord_id and last_updated
+        self.data["discord_id"] = str(self.user_id)
+        self.data["last_updated"] = datetime.now(timezone.utc).isoformat()
+        # Validate dropdowns
+        for field_id, label, input_type, extra in STAT_FIELDS:
+            if input_type == "dropdown" and self.data.get(field_id) not in extra:
+                await interaction.followup.send(f"Invalid value for {label}. Please choose one of: {', '.join(extra)}.", ephemeral=True)
+                return
+        # Upsert to Supabase
+        supabase.table("player_stats").upsert(self.data, on_conflict=["discord_id"]).execute()
+        await interaction.followup.send("Your stats have been submitted!", ephemeral=True)
+        active_sessions.pop(self.user_id, None)
+
 @bot.tree.command(name="submitstats", description="Submit your updated stats")
 @app_commands.describe(alliance="Which alliance are you currently in?")
 @app_commands.choices(alliance=[
@@ -105,7 +159,11 @@ class StatModalPage(discord.ui.Modal):
     app_commands.Choice(name="Recruitment", value="Recruitment"),
 ])
 async def submitstats(interaction: discord.Interaction, alliance: app_commands.Choice[str]):
-    await interaction.response.send_modal(StatModalPage(alliance.value, 0))
+    await interaction.response.send_message("Let's start collecting your stats!", ephemeral=True)
+    session = StatSession(interaction.user.id, alliance.value)
+    active_sessions[interaction.user.id] = session
+    await session.start(interaction)
+
 
 async def update_stats_message(channel, guild):
     # Fetch all stats
