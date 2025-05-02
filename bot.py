@@ -121,7 +121,9 @@ class StatSession:
             view = View()
             select = Select(placeholder=label, options=[discord.SelectOption(label=opt, value=opt) for opt in extra], custom_id=f"stat_{field_id}")
             async def select_callback(select_interaction):
+                print(f"[DEBUG] Dropdown field: {field_id}, value selected: {select.values[0]}")
                 self.data[field_id] = select.values[0]
+                print(f"[DEBUG] self.data[{field_id}] now: {self.data[field_id]} (type: {type(self.data[field_id])})")
                 self.step += 1
                 await select_interaction.response.defer()
                 await self.next_step(select_interaction)
@@ -136,18 +138,23 @@ class StatSession:
                     return m.author.id == self.user_id and m.channel == channel
                 msg = await bot.wait_for('message', check=check)
                 user_input = msg.content.strip()
+                print(f"[DEBUG] Prompted field: {field_id}, user input: '{user_input}' (type: {type(user_input)})")
                 if input_type == "int":
                     if user_input == "":
                         self.data[field_id] = None
+                        print(f"[DEBUG] self.data[{field_id}] set to None (empty input)")
                         break
                     try:
                         self.data[field_id] = int(user_input)
+                        print(f"[DEBUG] self.data[{field_id}] set to {self.data[field_id]} (type: {type(self.data[field_id])})")
                         break
                     except ValueError:
                         await channel.send(f"{interaction.user.mention} Please enter a valid integer for **{label}**.")
+                        print(f"[DEBUG] Invalid integer input for {field_id}: '{user_input}'")
                         continue
                 else:
                     self.data[field_id] = user_input if user_input != "" else None
+                    print(f"[DEBUG] self.data[{field_id}] set to '{self.data[field_id]}' (type: {type(self.data[field_id])})")
                     break
             self.step += 1
             await self.next_step(interaction)
