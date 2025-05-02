@@ -68,14 +68,17 @@ function App() {
   }, []);
 
   // Get unique values for filters
-  const branchOptions = Array.from(new Set(rows.map(row => row.alliance).filter(Boolean)));
+  const allowedBranches = ["FK!T", "SK!T"];
+  const branchOptions = allowedBranches;
   const troopTypeOptions = ["Infantry", "Cavalry", "Range"];
   const troopLevelOptions = Array.from(new Set(rows.map(row => row.troop_level).filter(Boolean)));
 
   // Troop type logic: try to use row.troop_type, else fallback to blank
   const getTroopType = row => row.troop_type || "";
 
+  // Only show rows with allowed branches
   const filteredRows = rows.filter(row => {
+    if (!allowedBranches.includes(row.alliance)) return false;
     const matchesBranch = branchFilter ? row.alliance === branchFilter : true;
     const matchesTroopType = troopTypeFilter ? getTroopType(row) === troopTypeFilter : true;
     const matchesTroopLevel = troopLevelFilter ? row.troop_level === troopLevelFilter : true;
@@ -91,14 +94,14 @@ function App() {
       <Typography variant="h3" align="center" gutterBottom>
         FK!T Alliance Stats
       </Typography>
-      <Box sx={{ mb: 2, display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center", flexDirection: { xs: "column", sm: "row" } }}>
+      <Box sx={{ mb: 3, display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center", flexDirection: { xs: "column", sm: "row" } }}>
         <TextField
           select
           label="Branch"
           value={branchFilter}
           onChange={e => setBranchFilter(e.target.value)}
           SelectProps={{ native: true }}
-          sx={{ width: 180, minWidth: 150 }}
+          sx={{ width: 180, minWidth: 150, mb: { xs: 2, sm: 0 } }}
         >
           <option value="">All Branches</option>
           {branchOptions.map(opt => (
