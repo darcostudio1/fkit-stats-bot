@@ -205,7 +205,6 @@ class StatSession:
 class SubmitStatsButton(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
-        self.add_item(discord.ui.Button(label="Submit Stats", style=discord.ButtonStyle.primary, custom_id="submit_stats_button"))
 
     @discord.ui.button(label="Submit Stats", style=discord.ButtonStyle.primary, custom_id="submit_stats_button")
     async def submit_stats(self, interaction: discord.Interaction, button: discord.ui.Button):
