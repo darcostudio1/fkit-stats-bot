@@ -67,7 +67,7 @@ class StatModalPage(discord.ui.Modal):
         for item in self.children:
             data[item.custom_id] = item.value
         # If not final page, show next modal
-        if self.page_num < len(STAT_PAGES) - 1:
+        if self.page_num + 1 < len(STAT_PAGES):
             user_modal_data[interaction.user.id] = data  # Save progress
             await interaction.response.send_modal(StatModalPage(self.alliance, self.page_num + 1, data))
         else:
