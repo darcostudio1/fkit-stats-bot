@@ -209,7 +209,10 @@ class SubmitStatsButton(discord.ui.View):
     @discord.ui.button(label="Submit Stats", style=discord.ButtonStyle.primary, custom_id="submit_stats_button")
     async def submit_stats(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=True)
-        # Ask alliance choice before starting session
+        # Create a thread for this stat session
+        thread_name = f"Stat Submission - {interaction.user.display_name}"
+        thread = await interaction.channel.create_thread(name=thread_name, type=discord.ChannelType.public_thread, auto_archive_duration=60)
+        # Post alliance select dropdown in the thread
         alliance_select = discord.ui.Select(
             placeholder="Select your alliance...",
             options=[
@@ -221,16 +224,14 @@ class SubmitStatsButton(discord.ui.View):
         )
         view = discord.ui.View()
         view.add_item(alliance_select)
-        await interaction.followup.send("Please select your alliance to begin:", view=view, ephemeral=True)
+        msg = await thread.send("Please select your alliance to begin:", view=view)
 
         async def select_callback(select_interaction: discord.Interaction):
             alliance = alliance_select.values[0]
-            thread_name = f"Stat Submission - {interaction.user.display_name}"
-            thread = await interaction.channel.create_thread(name=thread_name, type=discord.ChannelType.public_thread, auto_archive_duration=60)
             session = StatSession(interaction.user.id, alliance)
             active_sessions[interaction.user.id] = session
-            await thread.send(f"{interaction.user.mention}, let's collect your stats! Please answer each prompt below.")
             session.thread = thread
+            await thread.send(f"{interaction.user.mention}, let's collect your stats! Please answer each prompt below.")
             await session.next_step(interaction)
             await select_interaction.message.delete()
         alliance_select.callback = select_callback
