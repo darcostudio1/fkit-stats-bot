@@ -24,19 +24,19 @@ def get_stat_fields():
     return [
         ("keep_name", "Keep Name", "text", None),
         ("troop_level", "Troop Level", "dropdown", ["T7", "T8", "T9", "T10", "T11", "T12"]),
-        ("keep_level", "Keep Level", "text", None),
+        ("keep_level", "Keep Level", "int", None),
         ("march_size", "March Size", "text", "You can find this stat on your march screen when selecting troops for a march. It’s the maximum number of troops you can send in a single march."),
-        ("dragon_level", "Dragon Level", "text", None),
-        ("house_level", "House Level", "text", None),
+        ("dragon_level", "Dragon Level", "int", None),
+        ("house_level", "House Level", "int", None),
         ("rally_cap", "Rally Cap", "text", "This is the maximum number of troops you can rally. You can find it in your rally menu or rally info screen."),
         ("reinforcement_capacity_vs_sop", "Reinforcement Capacity vs SOP", "text", "This is the maximum number of troops you can reinforce at a Seat of Power. Check your keep’s reinforcement info at an SOP."),
         ("troop_type", "Troop Type", "dropdown", ["Infantry", "Range", "Cavalry"]),
-        ("marcher_attack_vs_player_sop", "Marcher (Troop) Attack vs Player at SOP", "text", None),
-        ("marcher_defense_vs_player_sop", "Marcher (Troop) Defense vs Player at SOP", "text", None),
-        ("marcher_health_vs_player_sop", "Marcher (Troop) Health vs Player at SOP", "text", None),
-        ("adh_attack_vs_player_sop", "(Troop) Attack vs Player at SOP", "text", None),
-        ("adh_defense_vs_player_sop", "(Troop) Defense vs Player at SOP", "text", None),
-        ("adh_health_vs_player_sop", "(Troop) Health vs Player at SOP", "text", None),
+        ("marcher_attack_vs_player_sop", "Marcher (Troop) Attack vs Player at SOP", "int", None),
+        ("marcher_defense_vs_player_sop", "Marcher (Troop) Defense vs Player at SOP", "int", None),
+        ("marcher_health_vs_player_sop", "Marcher (Troop) Health vs Player at SOP", "int", None),
+        ("adh_attack_vs_player_sop", "(Troop) Attack vs Player at SOP", "int", None),
+        ("adh_defense_vs_player_sop", "(Troop) Defense vs Player at SOP", "int", None),
+        ("adh_health_vs_player_sop", "(Troop) Health vs Player at SOP", "int", None),
     ]
 
 # --- Multi-step Modal Implementation ---
@@ -150,14 +150,19 @@ class StatSession:
         # Convert all empty strings to None for all non-dropdown fields, and cast to int if possible
         for field_id, label, input_type, extra in STAT_FIELDS:
             val = self.data.get(field_id)
-            if input_type != "dropdown":
+            if input_type == "int":
                 if val == "" or val is None:
                     self.data[field_id] = None
                 else:
                     try:
                         self.data[field_id] = int(val)
                     except Exception:
-                        pass
+                        self.data[field_id] = None
+            elif input_type == "text":
+                if val == "" or val is None:
+                    self.data[field_id] = None
+                else:
+                    self.data[field_id] = str(val)
         # Upsert to Supabase
         supabase.table("player_stats").upsert(self.data, on_conflict=["discord_id"]).execute()
         await interaction.followup.send("Your stats have been submitted!", ephemeral=True)
