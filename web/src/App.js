@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { DataGrid } from "@mui/x-data-grid";
-import { Container, Typography, Box, TextField } from "@mui/material";
+import { Container, Typography, Box, TextField, CssBaseline } from "@mui/material";
 import Grid from "@mui/material/Grid";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
 
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_URL,
@@ -24,6 +25,25 @@ const columnHeaderMap = {
   // Add more mappings as needed
 };
 
+
+const darkTheme = createTheme({
+  palette: {
+    mode: "dark",
+    background: {
+      default: "#181a1b",
+      paper: "#23272a"
+    },
+    primary: {
+      main: "#90caf9"
+    },
+    secondary: {
+      main: "#f48fb1"
+    },
+    text: {
+      primary: "#fff"
+    }
+  }
+});
 
 function App() {
   const [rows, setRows] = useState([]);
@@ -91,86 +111,88 @@ function App() {
   });
 
   return (
-    <Container maxWidth="xl" sx={{ mt: 6 }}>
-      <Typography variant="h3" align="center" gutterBottom>
-        FK!T Alliance Stats
-      </Typography>
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={6} lg={3}>
-          <TextField
-            select
-            fullWidth
-            label="Branch"
-            value={branchFilter}
-            onChange={e => setBranchFilter(e.target.value)}
-            SelectProps={{ native: true }}
-            sx={{ mb: { xs: 2, md: 0 } }}
-          >
-            <option value="">All Branches</option>
-            {branchOptions.map(opt => (
-              <option key={opt} value={opt}>{opt}</option>
-            ))}
-          </TextField>
+    <ThemeProvider theme={darkTheme}>
+      <CssBaseline />
+      <Container maxWidth="xl" sx={{ mt: 6 }}>
+        <Typography variant="h3" align="center" gutterBottom>
+          FK!T Alliance Stats
+        </Typography>
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+          <Grid item xs={12} md={6} lg={3}>
+            <TextField
+              select
+              fullWidth
+              label="Branch"
+              value={branchFilter}
+              onChange={e => setBranchFilter(e.target.value)}
+              SelectProps={{ native: true }}
+              sx={{ mb: { xs: 2, md: 0 } }}
+            >
+              <option value="">All Branches</option>
+              {branchOptions.map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </TextField>
+          </Grid>
+          <Grid item xs={12} md={6} lg={3}>
+            <TextField
+              select
+              fullWidth
+              label="Troop Type"
+              value={troopTypeFilter}
+              onChange={e => setTroopTypeFilter(e.target.value)}
+              SelectProps={{ native: true }}
+              sx={{ mb: { xs: 2, md: 0 } }}
+            >
+              <option value="">All Troop Types</option>
+              {troopTypeOptions.map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </TextField>
+          </Grid>
+          <Grid item xs={12} md={6} lg={3}>
+            <TextField
+              select
+              fullWidth
+              label="Troop Level"
+              value={troopLevelFilter}
+              onChange={e => setTroopLevelFilter(e.target.value)}
+              SelectProps={{ native: true }}
+              sx={{ mb: { xs: 2, md: 0 } }}
+            >
+              <option value="">All Troop Levels</option>
+              {troopLevelOptions.map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </TextField>
+          </Grid>
+          <Grid item xs={12} md={12} lg={3}>
+            <TextField
+              fullWidth
+              label="Search Players, Keeps, Stats..."
+              variant="outlined"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              sx={{ mb: { xs: 2, md: 0 } }}
+            />
+          </Grid>
         </Grid>
-        <Grid item xs={12} md={6} lg={3}>
-          <TextField
-            select
-            fullWidth
-            label="Troop Type"
-            value={troopTypeFilter}
-            onChange={e => setTroopTypeFilter(e.target.value)}
-            SelectProps={{ native: true }}
-            sx={{ mb: { xs: 2, md: 0 } }}
-          >
-            <option value="">All Troop Types</option>
-            {troopTypeOptions.map(opt => (
-              <option key={opt} value={opt}>{opt}</option>
-            ))}
-          </TextField>
-        </Grid>
-        <Grid item xs={12} md={6} lg={3}>
-          <TextField
-            select
-            fullWidth
-            label="Troop Level"
-            value={troopLevelFilter}
-            onChange={e => setTroopLevelFilter(e.target.value)}
-            SelectProps={{ native: true }}
-            sx={{ mb: { xs: 2, md: 0 } }}
-          >
-            <option value="">All Troop Levels</option>
-            {troopLevelOptions.map(opt => (
-              <option key={opt} value={opt}>{opt}</option>
-            ))}
-          </TextField>
-        </Grid>
-        <Grid item xs={12} md={12} lg={3}>
-          <TextField
-            fullWidth
-            label="Search Players, Keeps, Stats..."
-            variant="outlined"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            sx={{ mb: { xs: 2, md: 0 } }}
+        <div style={{ height: 600, width: "100%" }}>
+          <DataGrid
+            rows={filteredRows}
+            columns={columns}
+            pageSize={20}
+            rowsPerPageOptions={[20, 50, 100]}
+            disableSelectionOnClick
+            sx={{
+              borderRadius: 2,
+              boxShadow: 2,
+              fontSize: 16,
+            }}
           />
-        </Grid>
-      </Grid>
-      <div style={{ height: 600, width: "100%" }}>
-        <DataGrid
-          rows={filteredRows}
-          columns={columns}
-          pageSize={20}
-          rowsPerPageOptions={[20, 50, 100]}
-          disableSelectionOnClick
-          sx={{
-            background: "#fff",
-            borderRadius: 2,
-            boxShadow: 2,
-            fontSize: 16,
-          }}
-        />
-      </div>
-    </Container>
+        </div>
+      </Container>
+    </ThemeProvider>
   );
 }
 
