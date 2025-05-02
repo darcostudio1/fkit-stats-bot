@@ -238,7 +238,8 @@ class SubmitStatsButton(discord.ui.View):
 
 @bot.tree.command(name="poststatsbutton", description="Post the persistent Submit Stats button (admin only)")
 async def poststatsbutton(interaction: discord.Interaction):
-    if not any(role.name == ADMIN_ROLE for role in interaction.user.roles):
+    admin_roles = [role.strip() for role in ADMIN_ROLE.split(",")]
+    if not any(role.name in admin_roles for role in interaction.user.roles):
         await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
         return
     embed = discord.Embed(title="Alliance Stat Submission", description="Click the button below to submit your stats for the alliance.", color=discord.Color.blue())
@@ -282,7 +283,8 @@ async def update_stats_message(channel, guild):
 
 @bot.tree.command(name="showstats", description="Show the full team stats (admin only)")
 async def showstats(interaction: discord.Interaction):
-    if not any(role.name == ADMIN_ROLE for role in interaction.user.roles):
+    admin_roles = [role.strip() for role in ADMIN_ROLE.split(",")]
+    if not any(role.name in admin_roles for role in interaction.user.roles):
         await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
         return
     channel = interaction.guild.get_channel(STATS_CHANNEL_ID) or interaction.channel
