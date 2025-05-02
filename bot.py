@@ -179,6 +179,33 @@ class StatSession:
                     self.data[field_id] = str(val)
         # Debug: print data being upserted
         print("[DEBUG] Upserting to Supabase:", self.data)
+        for k, v in self.data.items():
+            print(f"  [DEBUG] {k}: {v} (type: {type(v)})")
+        # Hardcoded upsert test
+        test_data = {
+            "discord_id": "123456789",
+            "alliance": "FK!T",
+            "keep_name": "TestKeep",
+            "troop_level": "T10",
+            "keep_level": 25,
+            "march_size": "120000",
+            "dragon_level": 50,
+            "house_level": 30,
+            "rally_cap": "500000",
+            "reinforcement_capacity_vs_sop": "300000",
+            "troop_type": "Infantry",
+            "marcher_attack_vs_player_sop": 1000,
+            "marcher_defense_vs_player_sop": 900,
+            "marcher_health_vs_player_sop": 800,
+            "adh_attack_vs_player_sop": 700,
+            "adh_defense_vs_player_sop": 600,
+            "adh_health_vs_player_sop": 500,
+            "last_updated": datetime.now(timezone.utc).isoformat()
+        }
+        print("[DEBUG] TEST UPSERT:", test_data)
+        for k, v in test_data.items():
+            print(f"  [DEBUG] TEST {k}: {v} (type: {type(v)})")
+        supabase.table("player_stats").upsert(test_data, on_conflict=["discord_id"]).execute()
         # Upsert to Supabase
         supabase.table("player_stats").upsert(self.data, on_conflict=["discord_id"]).execute()
         await interaction.followup.send("Your stats have been submitted!", ephemeral=True)
